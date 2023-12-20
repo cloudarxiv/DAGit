@@ -1,0 +1,51 @@
+{
+    "name": "dummy-dag",
+    "dag": [
+        {
+            "node_id": "dummy1-action",
+            "properties":
+            {
+                "label": "Dummy 1 Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "dummy2-action",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from":[]
+            }
+        },
+        {
+            "node_id": "dummy2-action",
+            "properties":
+            {
+                "label": "Dummy 2 Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "dummy3-action",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["dummy1-action"]
+            }
+        },
+       
+       {
+            "node_id": "dummy3-action",
+            "properties":
+            {
+                "label": "Dummy 3 Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["dummy1-action","dummy2-action"]
+            }
+        }
+        
+    ]
+   
+}
+

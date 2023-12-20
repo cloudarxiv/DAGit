@@ -1,0 +1,5 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/image-processing
+wsk -i action create image-bilateral-filter --docker 10.129.28.219:5000/image-processing bilateral.py --web=true --timeout=420000 -m 4096
+wsk -i action update image-bilateral-filter --docker 10.129.28.219:5000/image-processing bilateral.py --timeout 300000
+
+./register.sh /image-bilateral-api /image-bilateral-path image-bilateral-filter --response-type=json

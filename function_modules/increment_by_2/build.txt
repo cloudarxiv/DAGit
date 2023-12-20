@@ -1,0 +1,6 @@
+
+sudo ./buildAndPush.sh 10.129.28.219:5000/increment-image
+wsk -i action create increment-action --docker 10.129.28.219:5000/increment-image --web=true --timeout=300000
+
+
+

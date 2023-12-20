@@ -1,0 +1,5 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/compile-image
+wsk -i action create ranlib-function --docker 10.129.28.219:5000/compile-image ranlib.py --web=true --timeout=420000 -m 128
+wsk -i action update ranlib-function --docker 10.129.28.219:5000/compile-image ranlib.py --web=true --timeout=420000 -m 128
+
+./register.sh /ranlib-function /ranlib ranlib-function --response-type=json

@@ -1,0 +1,106 @@
+{
+    "name": "parallel_image_processing_2",
+    "dag": [
+        {
+            "node_id": "decode-function",
+            "properties":
+            {
+                "label": "Decode Function",
+                "primitive": "parallel",
+                "condition":{},
+                "next": ["image-rotate","image-blur","image-thresholding","image-histogram","image-denoise"],
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from":[]
+            }
+        },
+        {
+            "node_id": "image-rotate",
+            "properties":
+            {
+                "label": "Image Rotate Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "merger-function-1",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["decode-function"]
+            }
+        },
+        {
+            "node_id": "image-blur",
+            "properties":
+            {
+                "label": "Image Blurring Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "merger-function-1",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["decode-function"]
+            }
+        },
+        {
+            "node_id": "image-thresholding",
+            "properties":
+            {
+                "label": "Image Thresholding Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "merger-function-1",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["decode-function"]
+            }
+        },
+        {
+            "node_id": "image-histogram",
+            "properties":
+            {
+                "label": "Image Thresholding Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "merger-function-1",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["decode-function"]
+            }
+        },
+        {
+            "node_id": "image-denoise",
+            "properties":
+            {
+                "label": "Image Thresholding Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "merger-function-1",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["decode-function"]
+            }
+        },
+        {
+            "node_id": "merger-function-1",
+            "properties":
+            {
+                "label": "Merge Parallel Functions",
+                "primitive": "serial",
+                "condition":{},
+                "next": "",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["image-rotate","image-blur","image-thresholding","image-histogram","image-denoise"]
+            }
+        }
+
+
+    ]
+   
+}

@@ -1,0 +1,2 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/assemble-image
+wsk -i action create assemble-action --docker 10.129.28.219:5000/assemble-image

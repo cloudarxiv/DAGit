@@ -1,0 +1,4 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/odd-print-image
+wsk -i action create odd-print-action --docker 10.129.28.219:5000/odd-print-image --web=true --timeout=30000
+
+

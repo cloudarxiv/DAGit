@@ -1,0 +1,6 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/compile-image
+wsk -i action create cli-function --docker 10.129.28.219:5000/compile-image cli_1.py --web=true --timeout=420000 -m 2048
+wsk -i action update cli-function --docker 10.129.28.219:5000/compile-image cli_1.py --web=true --timeout=420000 -m 2048
+
+./register.sh /cli-function /cli cli-function --response-type=json
+

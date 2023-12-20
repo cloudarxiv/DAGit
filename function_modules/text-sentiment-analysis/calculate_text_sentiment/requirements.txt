@@ -1,0 +1,5 @@
+tweepy
+textblob
+pandas
+nltk
+newspaper3k

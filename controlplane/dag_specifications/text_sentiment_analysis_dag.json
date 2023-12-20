@@ -1,0 +1,49 @@
+{
+    "name": "text-sentiment-analysis",
+    "dag": [
+        {
+            "node_id": "fetch_sentences",
+            "properties":
+            {
+                "label": "Fetch Sentences",
+                "primitive": "serial",
+                "condition":{},
+                "next": "calculate_sentiment",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from":[]
+            }
+        },
+        {
+            "node_id": "calculate_sentiment",
+            "properties":
+            {
+                "label": "Calculate Sentiment Polarity",
+                "primitive": "serial",
+                "condition":{},
+                "next": "create_sentiment_report",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["fetch_sentences"]
+            }
+        },
+        {
+            "node_id": "create_sentiment_report",
+            "properties":
+            {
+                "label": "Create a sentiment report for sentences",
+                "primitive": "serial",
+                "condition":{},
+                "next": "",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["fetch_sentences","calculate_sentiment"]
+            }
+        }
+
+    ]
+   
+}

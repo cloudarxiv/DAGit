@@ -1,0 +1,6 @@
+{
+    "trigger_name": "online_compiling",
+    "type":"dag",
+    "dags": ["online_compiling"],
+    "functions":""
+}

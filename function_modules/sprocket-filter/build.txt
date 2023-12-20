@@ -1,0 +1,2 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/filter-image-1
+wsk -i action create filter-action --docker 10.129.28.219:5000/filter-image-1

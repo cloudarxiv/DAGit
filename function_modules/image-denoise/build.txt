@@ -1,0 +1,7 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/image-denoise-image
+<<<<<<< HEAD
+./register.sh /image-denoise-api /image-denoise-path image-denoise --response-type=json
+=======
+./register.sh /image-denoise-api /image-denoise-path image-denoise --response-type=j
+>>>>>>> 152069aa8f6e2089787526c9d8af5c3ec1ac02f5
+wsk -i action create image-denoise --docker 10.129.28.219:5000/image-denoise-image --web=true --timeout=300000

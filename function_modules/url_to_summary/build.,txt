@@ -1,0 +1,4 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/text-sentiment-analysis
+./register.sh /fetch-sentences-api /fetch-sentences-path fetch_sentences --response-type=json
+wsk -i action create fetch_sentences --docker 10.129.28.219:5000/text-sentiment-analysis data_processing.py --web=true --timeout=420000 -m 2098
+wsk -i action update fetch_sentences --docker 10.129.28.219:5000/text-sentiment-analysis data_processing.py --timeout=420000 -m 4096

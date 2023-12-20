@@ -1,0 +1,49 @@
+{
+    "name": "toonify",
+    "dag": [
+        {
+            "node_id": "decode-function",
+            "properties":
+            {
+                "label": "Decode Function",
+                "primitive": "serial",
+                "condition":{},
+                "next": "image-bilateral-filter",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from":[]
+            }
+        },
+        {
+            "node_id": "image-bilateral-filter",
+            "properties":
+            {
+                "label": "Cartoon effect Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "encode-function",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["decode-function"]
+            }
+        },
+        {
+            "node_id": "encode-function",
+            "properties":
+            {
+                "label": "Combine Images to Video",
+                "primitive": "serial",
+                "condition":{},
+                "next": "",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["image-bilateral-filter"]
+            }
+        }
+
+    ]
+   
+}

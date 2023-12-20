@@ -1,0 +1,6 @@
+{
+    "trigger_name": "mydagtrigger",
+    "type":"dag",
+    "dags": ["toonify"],
+    "functions":""
+}

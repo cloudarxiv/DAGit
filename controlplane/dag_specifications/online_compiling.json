@@ -1,0 +1,190 @@
+{
+    "name": "online_compiling",
+    "dag": [
+        {
+            "node_id": "cli-function",
+            "properties":
+            {
+                "label": "CLI Function",
+                "primitive": "parallel",
+                "condition":{},
+                "next": ["strip-function","nm-function","ranlib-function"],
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from":[]
+            }
+        },
+        {
+            "node_id": "strip-function",
+            "properties":
+            {
+                "label": "Strip unceesaary lines Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "generate-dep",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["cli-function"]
+            }
+        },
+        {
+            "node_id": "nm-function",
+            "properties":
+            {
+                "label": "List symbols from binary",
+                "primitive": "serial",
+                "condition":{},
+                "next": "generate-dep",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["cli-function"]
+            }
+        },
+        {
+            "node_id": "ranlib-function",
+            "properties":
+            {
+                "label": "Ranlib function",
+                "primitive": "serial",
+                "condition":{},
+                "next": "generate-dep",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["cli-function"]
+            }
+        },
+        {
+            "node_id": "generate-dep",
+            "properties":
+            {
+                "label": "Generate Dependencies",
+                "primitive": "parallel",
+                "condition":{},
+                "next": ["readelf","dir-watcher"],
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["strip-function","nm-function","ranlib-function"]
+            }
+        },
+        {
+            "node_id": "readelf",
+            "properties":
+            {
+                "label": "Readelf Utility Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "preprocessor",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["generate-dep"]
+            }
+        },
+        {
+            "node_id": "dir-watcher",
+            "properties":
+            {
+                "label": "Directory Watcher Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "preprocessor",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["generate-dep"]
+            }
+        },
+        {
+            "node_id": "preprocessor",
+            "properties":
+            {
+                "label": "Preprocessing Directives Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "cc",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["readelf","dir-watcher"]
+            }
+        },
+        {
+            "node_id": "cc",
+            "properties":
+            {
+                "label": "CC Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "assembler",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["preprocessor"]
+            }
+        },
+        {
+            "node_id": "assembler",
+            "properties":
+            {
+                "label": "Assembler Directive Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "linker",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["cc"]
+            }
+        },
+        {
+            "node_id": "linker",
+            "properties":
+            {
+                "label": "Linker Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "ld",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["assembler"]
+            }
+        },
+        {
+            "node_id": "ld",
+            "properties":
+            {
+                "label": "LD Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "ar",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["linker"]
+            }
+        },
+        {
+            "node_id": "ar",
+            "properties":
+            {
+                "label": "AR Archive Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["ld"]
+            }
+        }
+
+
+    ]
+   
+}

@@ -1,0 +1,4 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/image-denoise-image
+wsk -i action create image-denoise --docker 10.129.28.219:5000/image-processing denoise.py --web=true --timeout=420000
+wsk -i action update image-denoise --docker 10.129.28.219:5000/image-processing denoise.py --web=true --timeout=420000
+./register.sh /image-denoise-api /image-denoise-path image-denoise --response-type=json

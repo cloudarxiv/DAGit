@@ -1,0 +1,10 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/decode-function-image
+wsk -i action create decode-function --docker 10.129.28.219:5000/decode-function-image decode.py --web=true --timeout=420000 -m 2048
+wsk -i action update decode-function --docker 10.129.28.219:5000/decode-function-image decode.py --web=true --timeout=420000 -m 2048
+
+./register.sh /decode-function /decode decode-function --response-type=json
+
+    // "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+
+
+curl -Lo kn-func https://github.com/knative/func/releases/download/knative-v1.10.0/func_linux_amd64

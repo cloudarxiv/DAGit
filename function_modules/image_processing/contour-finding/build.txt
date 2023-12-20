@@ -1,0 +1,2 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/contour-image
+wsk -i action create contour-action --docker 10.129.28.219:5000/contour-image --timeout 300000

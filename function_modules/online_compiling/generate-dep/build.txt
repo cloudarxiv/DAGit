@@ -1,0 +1,5 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/compile-image
+wsk -i action create generate-dep --docker 10.129.28.219:5000/compile-image gen_dep.py --web=true --timeout=420000 -m 128
+wsk -i action update generate-dep --docker 10.129.28.219:5000/compile-image gen_dep.py --web=true --timeout=420000 -m 128
+
+./register.sh /generate-dep /gen-dep generate-dep --response-type=json

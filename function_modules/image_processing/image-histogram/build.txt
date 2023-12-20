@@ -1,0 +1,4 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/image-processing
+wsk -i action create image-histogram --docker 10.129.28.219:5000/image-processing img_hist.py --web=true --timeout=600000 -m 512
+wsk -i action update image-histogram --docker 10.129.28.219:5000/image-processing img_hist.py --timeout=600000 -m 8192
+./register.sh /image-hist-api /image-hist-path image-histogram --response-type=json

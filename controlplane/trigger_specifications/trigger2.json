@@ -1,0 +1,6 @@
+{
+    "trigger_name": "myfunctiontrigger-1",
+    "type":"function",
+    "dags":"",
+    "functions": ["decode-function"]
+}

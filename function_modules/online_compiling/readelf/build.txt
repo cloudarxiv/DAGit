@@ -1,0 +1,5 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/compile-image
+wsk -i action create readelf --docker 10.129.28.219:5000/compile-image readelf.py --web=true --timeout=420000 -m 128
+wsk -i action update readelf --docker 10.129.28.219:5000/compile-image readelf.py --web=true --timeout=420000 -m 128
+
+./register.sh /readelf /readelf readelf --response-type=json

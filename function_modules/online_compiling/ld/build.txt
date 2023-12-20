@@ -1,0 +1,5 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/compile-image
+wsk -i action create ld --docker 10.129.28.219:5000/compile-image ld.py --web=true --timeout=420000 -m 128
+wsk -i action update ld --docker 10.129.28.219:5000/compile-image ld.py --web=true --timeout=420000 -m 128
+
+./register.sh /ld /ld ld --response-type=json

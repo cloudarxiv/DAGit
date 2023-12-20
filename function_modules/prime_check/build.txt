@@ -1,0 +1,4 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/prime-check-image
+wsk -i action create prime-check-action --docker 10.129.28.219:5000/prime-check-image --web=true --timeout=300000
+
+

@@ -1,0 +1,11 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/image-threshold-image
+wsk -i action create merger-function --docker 10.129.28.219:5000/image-processing merge.py --web=true --timeout=600000 
+wsk -i action update merger-function --docker 10.129.28.219:5000/image-processing merge.py --web=true --timeout=600000 
+
+./register.sh /image-merge-api /image-merge-path  merger-function --response-type=json
+
+
+wsk -i action create merger-function-1 --docker 10.129.28.219:5000/image-processing merge_2.py --web=true --timeout=600000 
+
+./register.sh /image-merge-1-api /image-merge-1-path  merger-function-1 --response-type=json
+

@@ -1,0 +1,5 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/image-processing
+wsk -i action create image-blur --docker 10.129.28.219:5000/image-processing blur.py --web=true --timeout=420000 -m 512
+wsk -i action update image-blur --docker 10.129.28.219:5000/image-processing blur.py --web=true --timeout=420000 -m 512
+
+./register.sh /image-blur-api /image-blur-path image-blur --response-type=json

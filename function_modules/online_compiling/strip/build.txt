@@ -1,0 +1,6 @@
+
+sudo ./buildAndPush.sh 10.129.28.219:5000/compile-image
+wsk -i action create strip-function --docker 10.129.28.219:5000/compile-image strip.py --web=true --timeout=420000 -m 128
+wsk -i action update strip-function --docker 10.129.28.219:5000/compile-image strip.py --web=true --timeout=420000 -m 128
+
+./register.sh /strip-function /strip strip-function --response-type=json

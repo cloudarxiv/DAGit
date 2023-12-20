@@ -1,0 +1,127 @@
+{
+    "name": "odd-even-test",
+    "dag": [
+        {
+            "node_id": "odd-even-action",
+            "properties":
+            {
+                "label": "Odd Even Action",
+                "primitive": "condition",
+                "condition":
+                {
+                    "source":"result",
+                    "operator":"equals",
+                    "target":"even"
+
+                },
+                "next": "",
+                "branch_1": "even-print-action",
+                "branch_2": "odd-print-action",
+                "arguments": {},
+                "outputs_from":[]
+
+            }
+        },
+        {
+            "node_id": "even-print-action",
+            "properties":
+            {
+
+                "label": "Even Print Action",
+                "primitive": "parallel",
+                "condition": {},
+                "next": ["increment-action","multiply-action"],
+                "branch_1": "",
+                "branch_2": "",
+                "arguments":{},
+                "outputs_from":["odd-even-action"]
+
+            }
+            
+        },
+        {
+            "node_id": "increment-action",
+            "properties":
+            {
+
+                "label": "INCREMENT ACTION",
+                "primitive": "serial",
+                "condition": {},
+                "next": "dummy4-action",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments":{},
+                "outputs_from":["even-print-action"]
+                
+
+            }
+            
+        },
+        {
+            "node_id": "multiply-action",
+            "properties":
+            {
+
+                "label": "MULTIPLY ACTION",
+                "primitive": "serial",
+                "condition": {},
+                "next": "dummy4-action",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments":{},
+                "outputs_from":["even-print-action"]
+
+            }
+            
+        },
+        {
+            "node_id": "dummy4-action",
+            "properties":
+            {
+                "label": "Dummy 4",
+                "primitive": "serial",
+                "condition":{},
+                "next": "",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments":{},
+                "outputs_from":["increment-action","multiply-action"]
+            }
+            
+        },
+        {
+            "node_id": "odd-print-action",
+            "properties":
+            {
+                "label": "Odd Print Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "prime-check-action",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments":{},
+                "outputs_from":["odd-even-action"]
+            }
+            
+        },
+        {
+            "node_id": "prime-check-action",
+            "properties":
+            {
+                "label": "Prime Check Action",
+                "primitive": "serial",
+                "condition":{},
+                "next": "",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments":{},
+                "outputs_from":["odd-print-action"]
+
+
+            }
+            
+        }
+        
+    ]
+   
+}

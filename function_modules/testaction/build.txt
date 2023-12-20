@@ -1,0 +1,11 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/test-s3
+wsk -i action create test-s3-trigger --docker 10.129.28.219:5000/test-s3 --web=true --timeout=300000
+wsk -i action update test-s3-trigger --docker 10.129.28.219:5000/test-s3 test.py --timeout 300000
+
+./register.sh /image-rotate-api /image-rotate-path image-rotate --response-type=json
+
+wsk -i trigger create myTrigger
+
+wsk -i rule create myRule1 s3-trigger test-s3-trigger --param bucket dagit-store --param suffix .txt
+
+wsk -i trigger create s3-trigger1 --feed /whisk.system/s3-trigger-feed/changes --param bucket dagit-store --param suffix .txt

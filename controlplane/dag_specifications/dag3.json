@@ -1,0 +1,49 @@
+{
+    "name": "FaceBlurring",
+    "dag": [
+        {
+            "node_id": "decode-function",
+            "properties":
+            {
+                "label": "Decode Function",
+                "primitive": "serial",
+                "condition":{},
+                "next": "face-detection",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from":[]
+            }
+        },
+        {
+            "node_id": "face-detection",
+            "properties":
+            {
+                "label": "Detect Face",
+                "primitive": "serial",
+                "condition":{},
+                "next": "image-blur",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["decode-function"]
+            }
+        },
+        {
+            "node_id": "image-blur",
+            "properties":
+            {
+                "label": "Blur Faces",
+                "primitive": "serial",
+                "condition":{},
+                "next": "",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments": {},
+                "outputs_from": ["face-detection"]
+            }
+        }
+
+    ]
+   
+}

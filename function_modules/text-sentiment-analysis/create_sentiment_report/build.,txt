@@ -1,0 +1,8 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/text-sentiment-analysis
+./register.sh /create_sentiment_report-api /create_sentiment_report-path create_sentiment_report --response-type=json
+wsk -i action create create_sentiment_report --docker 10.129.28.219:5000/text-sentiment-analysis sentiment_report.py --web=true --timeout=420000 -m 2048
+wsk -i action update create_sentiment_report --docker 10.129.28.219:5000/text-sentiment-analysis sentiment_report.py --timeout=420000 -m 4096
+
+
+
+wsk -i action update create_sentiment_report --concurrency 8000 --docker 10.129.28.219:5000/text-sentiment-analysis sentiment_report.py --timeout=420000 -m 128

@@ -1,0 +1,6 @@
+
+sudo ./buildAndPush.sh 10.129.28.219:5000/compile-image
+wsk -i action create cc --docker 10.129.28.219:5000/compile-image cc.py --web=true --timeout=420000 -m 128
+wsk -i action update cc --docker 10.129.28.219:5000/compile-image cc.py --web=true --timeout=420000 -m 128
+
+./register.sh /cc-function /cc cc --response-type=json

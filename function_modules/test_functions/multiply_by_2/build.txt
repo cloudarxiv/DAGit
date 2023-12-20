@@ -1,0 +1,6 @@
+
+sudo ./buildAndPush.sh 10.129.28.219:5000/multiply-image
+wsk -i action create multiply-action --docker 10.129.28.219:5000/multiply-image --web=true --timeout=300000
+
+
+

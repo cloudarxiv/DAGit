@@ -1,0 +1,4 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/performance-image
+wsk -i action create performance-action --docker 10.129.28.219:5000/performance-image
+
+

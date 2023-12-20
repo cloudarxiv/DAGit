@@ -1,0 +1,5 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/image-denoise-image
+wsk -i action create face-detection --docker 10.129.28.219:5000/image-denoise-image --web=true --timeout=300000
+./register.sh /image-face-api /image-face-path face-detection --response-type=json
+
+wsk -i action update face-detection --docker 10.129.28.219:5000/image-denoise-image face_detect.py --timeout 300000

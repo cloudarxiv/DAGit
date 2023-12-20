@@ -1,0 +1,8 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/image-resize-image
+wsk -i action create image-resize --docker 10.129.28.219:5000/image-processing resize.py --web=true --timeout=600000 -m 8192
+./register.sh /image-resize-api /image-resize-path image-resize --response-type=json
+
+wsk -i action update image-resize --docker 10.129.28.219:5000/image-processing resize.py --web=true --timeout=300000
+
+
+wsk -i action create image-histogram --docker 10.129.28.219:5000/image-processing --web=true --timeout=600000 -m 8192

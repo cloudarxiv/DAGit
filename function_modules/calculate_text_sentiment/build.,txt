@@ -1,0 +1,4 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/text-sentiment-analysis
+./register.sh /calculate-sentiment-api /calculate-sentiment-path calculate_sentiment --response-type=json
+wsk -i action create calculate_sentiment --docker 10.129.28.219:5000/text-sentiment-analysis sentiment.py --web=true --timeout=420000 -m 2048
+wsk -i action update calculate_sentiment --docker 10.129.28.219:5000/text-sentiment-analysis sentiment.py --timeout=420000 -m 4096

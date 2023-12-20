@@ -1,0 +1,3 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/image-threshold-image
+wsk -i action create image-thresholding --docker 10.129.28.219:5000/image-threshold-image --web=true --timeout=300000
+./register.sh /image-thresholding-api /image-thresholding-path image-thresholding --response-type=json

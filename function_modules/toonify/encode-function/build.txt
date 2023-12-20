@@ -1,0 +1,7 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/image-processing
+wsk -i action create encode-function --docker 10.129.28.219:5000/image-processing encode.py --web=true --timeout=420000 -m 2048
+wsk -i action update encode-function --docker 10.129.28.219:5000/image-processing encode.py --web=true --timeout=420000
+
+
+
+./register.sh /encode-function /encode encode-function

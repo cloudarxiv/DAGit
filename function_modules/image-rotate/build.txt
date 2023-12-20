@@ -1,0 +1,3 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/image-rotate-image
+wsk -i action create image-rotate --docker 10.129.28.219:5000/image-rotate-image --web=true --timeout=300000
+./register.sh /image-rotate-api /image-rotate-path image-rotate --response-type=json

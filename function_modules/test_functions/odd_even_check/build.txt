@@ -1,0 +1,4 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/odd-even-image
+wsk -i action create odd-even-action --docker 10.129.28.219:5000/odd-even-image --web=true --timeout=300000
+
+wsk -i action update odd-even-action --docker 10.129.28.219:500/odd-even-image ../function_modules/odd_even_check/odd_even_check.py --web=true --timeout 300000

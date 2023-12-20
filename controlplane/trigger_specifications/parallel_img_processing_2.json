@@ -1,0 +1,6 @@
+{
+    "trigger_name": "parallel_image_processing_trigger_2",
+    "type":"dag",
+    "dags": ["parallel_image_processing_2"],
+    "functions":""
+}

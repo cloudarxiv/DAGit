@@ -1,0 +1,9 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/edge-detect
+
+
+./register.sh /edge-detect-api /edge-detect-path image-edge-detection --response-type=json
+
+
+wsk -i action create image-edge-detection --docker 10.129.28.219:5000/edge-detect --web=true --timeout=300000
+
+wsk -i action update image-edge-detection --docker 10.129.28.219:5000/edge-detect edge_detect.py --timeout 300000

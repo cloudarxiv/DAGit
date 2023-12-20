@@ -1,0 +1,16 @@
+apiVersion: func.knative.dev/v1alpha1
+kind: Function
+metadata:
+  name: decode-function
+spec:
+  image: 10.129.28.219:5000/decode-function-image
+  runtime: python39
+  handler: decode.main
+
+
+kn service invoke decode-kn --data='{"filename":"https://dagit-store.s3.ap-south-1.amazonaws.com/Sci-Fi+Short+Film+%E2%80%9CTears+of+Steel_+_+DUST.mp4","parts":20}'
+
+
+kn service describe decode-kn -o url
+
+curl $(kn service describe decode-kn -o url) -d '{"filename":"https://dagit-store.s3.ap-south-1.amazonaws.com/Sci-Fi+Short+Film+%E2%80%9CTears+of+Steel_+_+DUST.mp4","parts":20}'

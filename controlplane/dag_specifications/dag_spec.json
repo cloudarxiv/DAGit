@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/anubhavjana/schema#",
+  "type": "object",
+  "properties": {
+    "dag": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^(odd-even-action|even-print-action|odd-print-action|prime-check-action)$"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "pattern": "^(Odd Even Action|Even Print Action|Odd Print Action|Prime Check Action)$"
+              },
+              "type": {
+                "type": "string",
+                "pattern": "^(conditional|serial|parallel)$"
+              },
+              "condition": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "enum": ["result"]
+                  },
+                  "operator": {
+                    "type": "string",
+                    "enum": ["equals"]
+                  },
+                  "target": {
+                    "type": "string",
+                    "enum": ["even"]
+                  }
+                },
+                "required": ["source", "operator", "target"],
+                "additionalProperties": false
+              },
+              "next": {
+                "type": "string",
+                "pattern": "^(prime-check-action|)$"
+              },
+              "branch_1": {
+                "type": "string",
+                "pattern": "^(even-print-action|)$"
+              },
+              "branch_2": {
+                "type": "string",
+                "pattern": "^(odd-print-action|)$"
+              },
+              "arguments": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "integer",
+                    "enum": [17]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": ["label", "type", "condition", "next", "branch_1", "branch_2", "arguments"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["id", "properties"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["dag"],
+  "additionalProperties": false
+}

@@ -1,0 +1,5 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/compile-image
+wsk -i action create preprocessor --docker 10.129.28.219:5000/compile-image preprocessor.py --web=true --timeout=420000 -m 128
+wsk -i action update preprocessor --docker 10.129.28.219:5000/compile-image preprocessor.py --web=true --timeout=420000 -m 128
+
+./register.sh /preprocessor /preprocessor preprocessor --response-type=json

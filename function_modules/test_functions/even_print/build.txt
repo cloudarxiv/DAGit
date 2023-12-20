@@ -1,0 +1,2 @@
+sudo ./buildAndPush.sh 10.129.28.219:5000/even-print-image
+wsk -i action create even-print-action --docker 10.129.28.219:5000/even-print-image --web=true --timeout=300000
