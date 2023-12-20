@@ -1,12 +1,10 @@
 <h1> DAGit </h1>
 
 
-<p><h3>Currently being developed by Anubhav Jana along with Prof Puru IITB</h3></p>
-=======
-<p><h3>Currently being maintained by Anubhav Jana, IITB</h3></p>
+<p><h3>Maintained by Anubhav Jana along with Prof Puru (Indian Institute of Technology, Bombay) </h3></p>
 
 
-<h4>This serverless FaaS platform supports individual function registrations, DAG registrations, Trigger registrations associated with DAGs/functons. This platform also supports various DAG primitives which is provided in this document for reference.</h4>
+<h4>DAGit is an open-source platform which supports end-to-end lifecyle of hosting of serverless workflows -- function registrations, DAG registrations, Trigger registrations associated with DAGs/functons. This platform also supports varied set of DAG primitives to support as many workflows as possible in general.</h4>
 
 <h2> Guide: Register a Function </h2>
 <h4> This section will guide you how to register a function. The following pre-requites are to be fulfilled before you register a function </h4>
