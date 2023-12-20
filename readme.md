@@ -1,10 +1,10 @@
 <h1> DAGit </h1>
 
-<<<<<<< HEAD
+
 <p><h3>Currently being developed by Anubhav Jana along with Prof Puru IITB</h3></p>
 =======
 <p><h3>Currently being maintained by Anubhav Jana, IITB</h3></p>
->>>>>>> 152069aa8f6e2089787526c9d8af5c3ec1ac02f5
+
 
 <h4>This serverless FaaS platform supports individual function registrations, DAG registrations, Trigger registrations associated with DAGs/functons. This platform also supports various DAG primitives which is provided in this document for reference.</h4>
 
