@@ -1,0 +1,63 @@
+{
+    "name": "filling-a-glass-of-water",
+    "dag": [
+        {
+            "node_id": "check_if_full",
+            "properties":
+            {
+                "label": "Check if full",
+                "primitive": "condition",
+                "condition":
+                {
+                    "source":"quantity",
+                    "operator":"less_than",
+                    "target": "1000"
+
+                },
+                "next": "",
+                "branch_1": "add_water",
+                "branch_2": "glass_full",
+                "arguments": {},
+                "outputs_from":["add_water"]
+
+            }
+        },
+        {
+            "node_id": "add_water",
+            "properties":
+            {
+
+                "label": "Add Water",
+                "primitive": "serial",
+                "condition": {},                
+                "next": "check_if_full",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments":{},
+                "outputs_from":["check_if_full"]
+
+            }
+            
+        },
+        {
+            "node_id": "glass_full",
+            "properties":
+            {
+
+                "label": "GLASS FULL",
+                "primitive": "serial",
+                "condition": {},
+                "next": "",
+                "branch_1": "",
+                "branch_2": "",
+                "arguments":{},
+                "outputs_from":["check_if_full"]                
+
+            }
+            
+        }
+        
+        
+    ]
+   
+}
