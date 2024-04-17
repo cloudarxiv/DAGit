@@ -4,12 +4,9 @@ DAGit is a platform designed to streamline the development and deployment of ser
 
 
 
-<kbd style="border: 1px solid black; padding: 8px;">
+<h2><kbd style="border: 1px solid black; padding: 8px;">
 <a href="https://ieeexplore.ieee.org/document/10487054">Published at the 30th IEEE International Conference On High Performance Computing, Data, & Analytics (HiPC 2023)</a>
-</kbd>
-
-## Main Components
-
+</kbd></h2>
 
 ### Trigger Specification
 
