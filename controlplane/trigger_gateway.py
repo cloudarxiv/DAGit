@@ -4,13 +4,51 @@ import shutil
 import threading
 import json
 import os
+import io
+
 from flask import Flask, request,jsonify
 import pymongo
 import orchestrator
 import validate_trigger
+import redis_setup
+import minio_dagit
+import time
+import logging
+from datetime import datetime
+from queue import Queue
+import multiprocessing
+
+
+from functions import Functions
+from deployment import DeploymentManager
+
+import cProfile
+import pstats
+
+
 
 
 app = Flask(__name__)
+
+bucket_name = 'dagit-store'
+
+
+# create minio client 
+minio_client = minio_dagit.create_minio_client(bucket_name)    
+
+### Create in-memory redis storage ###
+redis_instance = redis_setup.create_redis_master_instance()
+# redis_slave = redis_setup.create_redis_slave_instance()
+
+
+
+# configure logging
+# logging.basicConfig(filename='dagit_request_logs.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Configure the logger
+logging.basicConfig(filename='dagit_request_logs.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger('werkzeug')
+logger.setLevel(logging.ERROR)
 
 
 action_url_mappings = {} #Store action->url mappings
@@ -18,6 +56,7 @@ action_properties_mapping = {} #Stores the action name and its corresponding pro
 responses = []
 list_of_func_ids = [] 
 
+trigger_cache = {}
 
 @app.route("/")
 def home():
@@ -48,7 +87,7 @@ def register_trigger():
     mycol = mydb["triggers"]
     try:
         cursor = mycol.insert_one(trigger_json)
-        print("OBJECT ID GENERATED",cursor.inserted_id)
+        print("TRIGGER REGISTERED: ",cursor.inserted_id)
         if(trigger_json["type"]=="dag"):
             targets = trigger_json["dags"]
         elif(trigger_json["type"]=="function"):
@@ -143,11 +182,11 @@ def register_dag():
     mycol = mydb["dags"]
     try:
         cursor = mycol.insert_one(dag_json)
-        print("OBJECT ID GENERATED",cursor.inserted_id)
+        print("DAG registered: ",cursor.inserted_id)
         data = {"message":"success"}
         return json.dumps(data)
     except Exception as e:
-        print("Error--->",e)
+        print("Error registering DAG--->",e)
         data = {"message":"fail","reason":e}
         return json.dumps(data)
 
@@ -219,7 +258,6 @@ def view_triggers():
 
 @app.route('/view/trigger/<trigger_name>',methods=['GET'])
 def view_trigger(trigger_name):
-    print(request.url)
     myclient = pymongo.MongoClient("mongodb://127.0.0.1/27017")
     mydb = myclient["trigger_store"]
     mycol = mydb["triggers"]
@@ -256,15 +294,94 @@ def list_activations(activation_id):
 # EXAMPLE URL: http://10.129.28.219:5001/view/dag/76cc8a53-0a63-47bb-a5b5-9e6744f67c61
 @app.route('/view/<dag_id>',methods=['GET'])
 def view_dag_metadata(dag_id):
-    myclient = pymongo.MongoClient("mongodb://127.0.0.1/27017")
+    try:
+        myclient = pymongo.MongoClient("mongodb://127.0.0.1/27017")
+        mydb = myclient["dag_store"]
+        mycol = mydb["dag_metadata"]
+        query = {"dag_activation_id":dag_id}
+        projection = {"_id": 0,
+                      "dag_activation_id":1,
+                      "id":1,
+                      "start_timestamp":1,
+                      "end_timestamp":1,
+                      "time_first_deque_timestamp":1,
+                      "dag_execution_time_in_secs":1,
+                      "total_bytes_written":1,
+                      "functions":1,
+                      "total_bytes_read":1}
+        document = mycol.find(query, projection)
+        data = list(document)
+        response = {"dag_metadata":data}
+        return json.dumps(response)
+    except Exception as e:
+        response = {"error":e}
+        return json.dumps(response)
+    
+@app.route('/view/function/<function_id>',methods=['GET'])
+def view_function_metadata(function_id):
+    try:
+        myclient = pymongo.MongoClient("mongodb://127.0.0.1/27017")
+        mydb = myclient["dag_store"]
+        mycol = mydb["function_metadata"]
+        
+        query = {f"{function_id}.function_activation_id": function_id}
+        
+        projection = {"_id": 0,
+                      f"{function_id}.function_id": 1,
+                      f"{function_id}.function_activation_id": 1,
+                      f"{function_id}.function_start_timestamp": 1,
+                      f"{function_id}.function_end_timestamp": 1,
+                      f"{function_id}.function_output": 1,
+                      f"{function_id}.byes_written": 1,
+                      f"{function_id}.bytes_read": 1,
+                      f"{function_id}.node_name": 1
+                    }
+        document = mycol.find(query, projection)
+        data = list(document)        
+        response = {"function_metadata": data}
+        return json.dumps(response,indent=4)
+    except Exception as e:
+        response = {"error": str(e)}
+        return json.dumps(response)
+
+
+
+@app.route('/delete/dag/<dag_id>',methods=['DELETE'])
+def delete_dag_metadata(dag_id):
+    # Establish connection to MongoDB
+    myclient = pymongo.MongoClient("mongodb://127.0.0.1:27017")
     mydb = myclient["dag_store"]
     mycol = mydb["dag_metadata"]
-    query = {"dag_id":dag_id}
-    projection = {"_id": 0,"dag_id":1,"dag_name":1,"function_activation_ids":1}
-    document = mycol.find(query, projection)
-    data = list(document)
-    response = {"dag_metadata":data}
-    return json.dumps(response)
+    query = {"dag_activation_id": dag_id}
+    # Perform the delete operation
+    result = mycol.delete_one(query)
+
+    if result.deleted_count == 1:
+        response = {"message":"success"}
+        return json.dumps(response)
+    else:
+        response = {"message":"failed"}
+        return json.dumps(response)
+    
+
+app.route('/delete/function/<function_id>',methods=['DELETE'])
+def delete_dag_metadata(function_id):
+    # Establish connection to MongoDB
+    myclient = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+    mydb = myclient["dag_store"]
+    mycol = mydb["function_metadata"]
+    query = {"function_activation_id": function_id}
+    # Perform the delete operation
+    result = mycol.delete_one(query)
+
+    if result.deleted_count == 1:
+        response = {"message":"success"}
+        return json.dumps(response)
+    else:
+        response = {"message":"failed"}
+        return json.dumps(response)
+    
+
 
 # EXAMPLE URL: http://10.129.28.219:5001/run/action/odd-even-action
 # http://10.129.28.219:5001/run/action/decode-function
@@ -278,15 +395,58 @@ def execute_action(action_name):
         data = {"status": 404 ,"failure_reason":e}
         return data
 
-    
+# Define a function to execute orchestrator.execute_dag in a thread
+def execute_dag_in_thread(dag_details, request_json, minio_client, redis_instance, bucket_name, result_queue):
+    thread_id = threading.get_ident()
+    # pr = cProfile.Profile()
+
+    try:       
+            
+        request_start_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        # pr.enable()
+        res, workflow_start_timestamp, workflow_end_timestamp, workflow_duration, dag_id, dag_name = orchestrator.execute_dag(dag_details, request_json, minio_client, redis_instance, bucket_name,thread_id)
+        # pr.disable()
+        request_end_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        request_duration = (datetime.strptime(request_end_timestamp, '%Y-%m-%d %H:%M:%S.%f') - datetime.strptime(request_start_timestamp, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()      
+       
+
+        if res:
+            logging.info("{}, {}, {},{}, {}, {}, {}, {}".format(request_start_timestamp, request_end_timestamp, workflow_start_timestamp, workflow_end_timestamp, request_duration, workflow_duration, dag_name, dag_id))
+            result_queue.put({
+                "response": res,
+                "status": 200,
+                "request_start_timestamp": request_start_timestamp,
+                "request_end_timestamp": request_end_timestamp,
+                "request_duration_seconds": request_duration,
+                "workflow_duration_seconds": workflow_duration,
+                "workflow_start_timestamp": workflow_start_timestamp,
+                "workflow_end_timestamp": workflow_end_timestamp,
+                "dag_activation_id": dag_id,
+                "dag_id": dag_name
+            })
+        else:
+            result_queue.put({"response": "Workflow did not execute completely", "status": 400})
+    except Exception as e:
+        result_queue.put({"response": "failed", "status": 400, "reason":str(e)})
+
+
+   
 # EXAMPLE URL: http://10.129.28.219:5001/run/mydagtrigger
 @app.route('/run/<trigger_name>', methods=['GET', 'POST'])
-def orchestrate_dag(trigger_name):
+def orchestrate_dag(trigger_name):   
     
-    
+    global trigger_cache
     orchestrator.dag_responses = []
     try:
-        triggers = validate_trigger.get_trigger_json(trigger_name)
+        # Check if the trigger is already cached
+        if trigger_name in trigger_cache:            
+            triggers = trigger_cache[trigger_name]
+        else:
+           
+            # If not cached, fetch and validate the trigger
+            triggers = validate_trigger.get_trigger_json(trigger_name)            
+            trigger_cache[trigger_name] = triggers
+        
         if len(triggers) == 0:
             return {"response": "the given trigger is not registered in DAGit trigger store"}
         else:
@@ -294,43 +454,41 @@ def orchestrate_dag(trigger_name):
             if triggers[0]['type'] == 'dag':
                 # dags = triggers[0]['dags']
                 
-                try:
+                try:                   
                     
-                    # If only 1 dag execute it directly without thread. 
                     
-                    no_of_dags = len(triggers[0]['dags'])
-                    
-                    if no_of_dags==1:
-                        # print('Inside libne 341')
-                        
+                    try:
+                        request_start_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]            
 
-                        orchestrator.execute_dag(triggers[0]['dags'][0], request.json)
-                        # print(orchestrator.dag_responses)
-                        # orchestrator.execute_dag(triggers[0]['dags'][0],request.json)
-                        if(len(orchestrator.dag_responses)!=0):
-                            response = orchestrator.dag_responses
-                            orchestrator.dag_responses = []
-                            return {"response": response, "status": 200}
-                        else:
-                            return{"response":"Workflow did not execute completely", "status": 400}
+                        res, workflow_start_timestamp, workflow_end_timestamp, workflow_duration, dag_id, dag_name = orchestrator.execute_dag(triggers[0]['dags'][0], request.json, redis_instance,minio_client,bucket_name)
+                        request_end_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]  
                         
-                    else:
-                    
-                        for dag in triggers[0]['dags']:
-                            thread_list.append(threading.Thread(target=orchestrator.execute_dag, args=[dag, request.json]))
-                        for thread in thread_list:
-                            thread.start()
-                        for thread in thread_list:
-                            thread.join()
-                            
-                        if(len(orchestrator.dag_responses)!=0):
-                            return {"response": orchestrator.dag_responses, "status": 200}
-                        else:
-                            return{"response":"Workflow did not execute completely", "status": 400}
+                        request_duration = (datetime.strptime(request_end_timestamp, '%Y-%m-%d %H:%M:%S.%f') - datetime.strptime(request_start_timestamp, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()
+                                        
+                        workflow_duration =  (datetime.strptime(workflow_end_timestamp, '%Y-%m-%d %H:%M:%S.%f') - datetime.strptime(workflow_start_timestamp, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()
+
+                       logging.info("{}, {}, {},{}, {}, {}, {}, {}".format(request_start_timestamp,request_end_timestamp,workflow_start_timestamp,workflow_end_timestamp,request_duration,workflow_duration,dag_name,dag_id))
+
+                        return jsonify({"response": res, "status": 200, 
+                                "request_start_timestamp":request_start_timestamp,
+                                "request_end_timestamp": request_end_timestamp,
+                                "request_duration_seconds": request_duration,
+                                "workflow_duration_seconds": workflow_duration,
+                                "workflow_start_timestamp":workflow_start_timestamp,
+                                "workflow_end_timestamp": workflow_end_timestamp,
+                                "dag_activation_id":dag_id,
+                                "dag_id": dag_name
+                                })                     
+                       
+                        
+                    except Exception as e:
+                        print("------Error line 519---", str(e)) 
+                        return{"response":"Workflow did not execute completely", "status": 400}                   
+                   
 
                 except Exception as e:
-                    # print("Error------->",e)
-                    return {"response": "failed", "status": 400}
+                    print("Error------->",e)
+                    return {"response": "failed", "status": 400, "reason": str(e)}
 
             else:
                 try:
@@ -346,19 +504,25 @@ def orchestrate_dag(trigger_name):
 
                     return {"response": orchestrator.function_responses, "status": 200}
                 except Exception as e:
-                    # print("Error------->",e)
                     return {"response": "failed", "status": 400}
 
     except Exception as e:
-        # print("Error------->",e)(e)
         data = {"status": 404, "message": "failed"}
         return data
 
+
 if __name__ == '__main__':
-    ######### Updates the list of action->url mapping ###################
-    script_file = './actions.sh'
-    subprocess.call(['bash', script_file])
-    #####################################################################
-    orchestrator.preprocess("action_url.txt")
-    app.run(host='0.0.0.0', port=5001,threaded=True)
-    # app.run()
+    # Number of processes you want to run concurrently
+    num_processes = 5
+    
+    # Port number for the first process
+    base_port = 5001
+    
+    # Create a list to store the processes
+    processes = []
+    
+    # Start multiple processes with different port numbers
+    for i in range(num_processes):
+        port = base_port + i
+        p = multiprocessing.Process(target=app.run, kwargs={'host': '0.0.0.0', 'port': port})
+        p.start()
