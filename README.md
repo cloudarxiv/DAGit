@@ -217,19 +217,74 @@ Below diagram depicts the DAG specified above.
 
 ## Function Registration 
 
-> DAGit has an implemented class named Functions 
+> DAGit has an implemented Class named Functions which has the following utility functions:  
+> * register_function (path_to_script, function_name, dockerfile, type) : Register a function of type (cpu or gpu) onto DAGit function store
+> * list_functions() : List all the functions  
+> * get_function(function) : Fetches information for a given function name  
+> * delete_function(function) : Deletes a given function from DAGit function store.  
+
+> Previously we used Openwhisk as the serverless backend for registering and executing serverless functions. Currenly we haved moved on to our own platform for function registration and giving the necessary background components to run serverless workflow.  
+> Kubernetes components that DAGit uses for establishing a backend for executing functions :  
+> * Deployments  
+> * NodePort Service  
+> * Horizontal Pod Autoscalar (HPA)  
+
+> DAGit has an implemented Class named Deployment Manager which has the following utility functions:  
+> * create_deployment() : Creates a deployment object 
+> * update_deployment_cpu_resources(deployment_name, cpu_request, cpu_limit) : Updates a given deployment with updated CPU requests  
+> * delete_deployment(deployment_name) : Deletes a given deployment  
+> * set_autoscaling(min_replicas, max_replicas) : Creates a HPA with minimum and maximum replicas.  
+> * create_service() : Creates a service object of type NodePort.  
+> * delete_service(service_name) : Deletes the given service  
+> * delete_hpa(hpa_name) : Deletes a given HPA.
+
+Below is a sample code snippet to demonstrate the usage of the Functions and Deployment Manager Class to register the function.
+
+```python
+
+
+from functions import Functions
+from deployment import DeploymentManager
+
+
+fr = Functions() 
+func = fr.register_function("./function_modules/fill_glass_water/glass_full/glass_full.py","glass_full","10.129.28.219:5000/glass_full","cpu")
+deployment = DeploymentManager(func)
+deployment.create_deployment()
+node_port = deployment.create_service()
+deployment.set_autoscaling(min_replicas=1, max_replicas=70)
+
+```
+
+Below is another sample code snippet to demonstrate the usage of the Functions and Deployment Manager Class to de-register the function.
+
+```python
+
+from functions import Functions
+from deployment import DeploymentManager
+
+func = "glass_full"
+fr = Functions()
+
+deployment = DeploymentManager(func)
+deployment_name = "dagit-deployment-"+deployment.function_name
+service_name = deployment.function_name
+hpa_name = deployment.function_name
+
+
+# Delete deployment 
+deployment.delete_deployment(deployment_name)
+deployment.delete_service(service_name)
+deployment.delete_hpa(hpa_name)
+
+# Delete function from the store
+
+fr.delete_function(func)
+
+
+```
+
 
 ## DAGit Operations and Interactions
 
 ![Alt text](./dagit_operations_interactions.png)
-
-
-Previously we used Openwhisk as the serverless backend for registering and executing serverless functions. Currenly we haved moved on to our own platform for function registration and giving the necessary background components to run serverless workflow.
-
-Kubernetes components that DAGit uses for establishing a backend for executing functions : 
-
-* Deployments
-
-* NodePort Service
-
-* Horizontal Pod Autoscalar (HPA)
