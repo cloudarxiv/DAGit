@@ -4,9 +4,9 @@ DAGit is a platform designed to streamline the development and deployment of ser
 
 
 
-<h2><kbd style="border: 1px solid black; padding: 8px;">
+<kbd style="border: 1px solid black; padding: 8px;">
 <a href="https://ieeexplore.ieee.org/document/10487054">Published at the 30th IEEE International Conference On High Performance Computing, Data, & Analytics (HiPC 2023)</a>
-</kbd></h2>
+</kbd>
 
 ### Trigger Specification
 
@@ -285,3 +285,39 @@ fr.delete_function(func)
 ## DAGit Operations and Interactions
 
 ![Alt text](./dagit_operations_interactions.png)
+
+
+The control plane passes intermediate data in the form of keys to the functions. The developer of the function has to read the key. Example of such an implementation is provided in the below script. 
+
+```python
+
+    import redis
+
+    # import other libraries 
+
+    ''' Rest of the code '''
+
+    # If part of an intermediate function in the workflow         
+
+    try:
+        
+        params = request.json
+        host = params.get("host")
+        port = params.get("port")
+        key = params.get("key")
+        redis_instance = redis.Redis(host=host, port=port,db=2)
+        input = pickle.loads(redis_instance.get(key))        
+        url = input["url"]
+
+    # If its a starting function
+    
+    except:        
+        url = params["url"]  
+
+    # This url can now be used in the functon implementation anywhere
+
+    ''' Rest of the code '''
+
+```
+
+More examples can be found in function_modules/ directory.
