@@ -1,60 +1,82 @@
-#!/usr/bin/env python3
-
-import os
+from flask import Flask, request, jsonify
+import uuid  # Import the uuid module
 import json
-import sys
 from textblob import TextBlob
 from newspaper import Article
+import redis
 import re
+import pickle
+
+import requests
 
 
-def main(params):
-    activation_id = os.environ.get('__OW_ACTIVATION_ID')
-    print(activation_id)
-    # params = json.loads(sys.argv[1])
-    url = params["url"]
+app = Flask('fetch_sentences')
+
+@app.route('/fetch_sentences', methods=['POST'])
+def main():
+
+    # Get parameters from the POST request
+    
+    try:
+        
+        params = request.json
+        # If part of an intermediate function in the workflow         
+        host = params.get("host")
+        port = params.get("port")
+        key = params.get("key")
+        redis_instance = redis.Redis(host=host, port=port,db=2)
+        input = pickle.loads(redis_instance.get(key))        
+        url = input["url"]
+    except:        
+        url = params["url"]
+        
+    # params = request.json
+    # url = params.get("url")
+
+    # Process the article
     article = Article(url)
-    
-    print("Article",article)
-
     article.download()
-    
-    print("Line 22")
-
     article.parse()
-    
-    print("Line 26")
-
     article.nlp()
-    
-    print("Line 30")
-
     data = article.summary
-    
-    print("Data",data)
 
-    # Remove newlines and numbers in square brackets
+    # Clean up the data
     data = re.sub(r'\n', ' ', data)
     data = re.sub(r'\[\d+\]', '', data)
-
-    # Split summary into sentences based on periods
     sentences = re.split(r'\.', data)
-    
-    # Remove leading/trailing whitespaces and empty sentences
     sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
-    
-    print("Line 46")
-    
-    print(json.dumps({ "activation_id": str(activation_id),
-                        "processed_data" : sentences
-                    }))
 
-    return({"activation_id": str(activation_id),
-            
-            "processed_data":sentences
-        })
     
     
+    ################################################################################
+    
+    activation_id = str(uuid.uuid4())
+    response = {
+        "activation_id": activation_id,
+        "processed_data": sentences
+    }    
+    # Call the store_data endpoint to store the response
+    store_data_url = "http://10.129.28.219:5005/store_data/fetch_sentences/redis"
+    # headers = {'Content-Type': 'application/json'}
+    response_store = requests.post(store_data_url,json=response, verify=False)  # returns the key only
+
+    if response_store.status_code == 200:
+        # If storing the data is successful, print the key
+        response_data = response_store.json()
+        
+        response_data["activation_id"] = activation_id
+
+        print("Key:", response_data["key"])
+    else:
+        # If there's an error, print the status code
+        print("Error:", response_store.status_code)
+
+    return jsonify(response_data) # returns key and activation id 
+    ################################################################################
+    
+    
+    
+   
 
 if __name__ == "__main__":
-    main(params)
+    app.run(host='0.0.0.0',port=8080)
