@@ -325,5 +325,3 @@ The control plane passes intermediate data in the form of keys to the functions.
     
 
 ```
-
-More examples can be found in function_modules/ directory.
