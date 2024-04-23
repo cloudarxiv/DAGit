@@ -228,7 +228,7 @@ Below diagram depicts the DAG specified above.
 
 > DAGit has an implemented Class named Deployment Manager which has the following utility functions:  
 > * create_deployment() : Creates a deployment object 
-> * update_deployment_cpu_resources(deployment_name, cpu_request, cpu_limit) : Updates a given deployment with updated CPU requests  
+> * update_deployment_cpu_resources(deployment_name, cpu_request, cpu_limit) : Updates the pods with a given deployment with updated CPU limits ans requests.
 > * delete_deployment(deployment_name) : Deletes a given deployment  
 > * set_autoscaling(min_replicas, max_replicas) : Creates a HPA with minimum and maximum replicas.  
 > * create_service() : Creates a service object of type NodePort.  
