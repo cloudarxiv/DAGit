@@ -287,7 +287,7 @@ fr.delete_function(func)
 ![Alt text](./dagit_operations_interactions.png)
 
 
-The control plane passes intermediate data in the form of keys to the functions. The developer of the function has to read the key. Example of such an implementation is provided in the below script. 
+The control plane passes intermediate data in the form of keys to the functions. The developer of the function has to read the key. Suppose you want to fetch the "url" from the parameters. Example of such an implementation is provided in the below script. 
 
 ```python
 
@@ -310,7 +310,7 @@ The control plane passes intermediate data in the form of keys to the functions.
         url = input["url"]
 
     # If its a starting function
-    
+
     except:        
         url = params["url"]  
 
