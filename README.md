@@ -296,10 +296,8 @@ The control plane passes intermediate data in the form of keys to the functions.
     import redis
     import pickle
 
-    ''' import other libraries '''
-    .
-    .
-    .
+    ''' import other libraries '''   
+    
 
     ''' Rest of the code '''
 
@@ -323,9 +321,8 @@ The control plane passes intermediate data in the form of keys to the functions.
     # This url can now be used in the functon implementation anywhere
 
     ''' Rest of the code '''
-    .
-    .
-    .
+    
+    
 
 ```
 
