@@ -325,3 +325,68 @@ The control plane passes intermediate data in the form of keys to the functions.
     
 
 ```
+
+The functions running on container call a generic function which is a web framework exposed by FLASK to store the intermediate data and return the key as a pointer to the data. This is done to minimize data movement between control plane and the containers. 
+
+The web framework is implemented as a FLASK application which has the following input parameters : 
+
+* function name : The name of the function for which to store the intermediate data
+
+* destination : Destination storage as to where to store. Currently we support redis and S3 minio
+
+Below is the code snippet of how to use this endpoint to store output to your preferred destination:
+
+```python
+
+    ################################################################################
+        
+        activation_id = str(uuid.uuid4())
+
+        response = {
+        "activation_id": activation_id,
+        "sentiments": sentiments
+       }
+        # Call the store_data endpoint to store the response
+        store_data_url = "http://10.129.28.219:5005/store_data/calculate_sentiment/redis"
+        # headers = {'Content-Type': 'application/json'}
+        response_store = requests.post(store_data_url,json=response, verify=False)
+
+        if response_store.status_code == 200:
+            # If storing the data is successful, print the key
+            response_data = response_store.json()            
+            response_data["activation_id"] = activation_id
+        else:
+            # If there's an error, print the status code
+            print("Error:", response_store.status_code)
+
+        return jsonify(response_data)
+
+        #################################################################################
+
+```
+Add this snippet at the end of your function before returning output.
+
+## How to run DAGit
+
+```bash
+
+# Change directory to the path where source files are present 
+
+$ cd <path to DAGit>
+
+$ sudo ./minio server /minio # Start the minio client
+
+$ cd <path_to_DAGit>/controlplane 
+
+$ python3 trigger_gateway.py # Starts DAGit instance 
+
+$ python3 intermediate_store.py # Starts the web framework for storing intermediate data
+
+
+```
+
+## Running a DAG using trigger
+
+The given example shows a trigger named "text_sentiment_analysis_trigger" which is associated with a DAG which is again associated with functions.
+
+> POST  http://10.129.28.219:5001/run/text_sentiment_analysis_trigger 
