@@ -1,11 +1,19 @@
-FROM openwhisk/python3action
+FROM python:3.9-slim
 
-RUN apk --update add --no-cache g++ lapack-dev gfortran openssl ca-certificates py-openssl jpeg-dev zlib-dev libjpeg
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
-RUN pip install textblob nltk newspaper3k
+COPY . .
 
-RUN pip install pandas
-
-RUN python -m textblob.download_corpora
+# RUN pip install --no-cache-dir -r requirements.txt
 
 
+RUN pip install pandas 
+
+RUN pip install redis
+
+RUN pip install flask
+
+RUN pip install requests
+
+CMD ["python", "sentiment_report.py"]
