@@ -371,7 +371,10 @@ def execute_dag(dag_name,request,redis_instace,minio_client,bucket_name):
                 list_of_func_ids.append(function_id)
                 functions[action] = function_id               
 
-                redis_instace.set(action+"-output",pickle.dumps(reply.json()))
+                # redis_instace.set(action+"-output",pickle.dumps(reply.json()))
+                
+                ''' Now the individual container function will call a generic function to write output to the redis master and not
+                the control plane '''
                 memory_usage = redis_instace.memory_usage(action + "-output")
                 bytes_written_per_function.append(memory_usage)
                 
