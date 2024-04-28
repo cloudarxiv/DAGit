@@ -10,6 +10,8 @@ from functions import Functions
 global function_service_mapping
 function_service_mapping = {}
 
+host_ips = ['10.129.28.219','10.129.28.158','10.129.27.94','10.129.28.70','10.129.27.113','10.129.2.187','10.129.2.188','10.129.2.21','10.129.131.194']
+
 class DeploymentManager:
     def __init__(self, function_name):
         self.fname = function_name
@@ -158,8 +160,6 @@ class DeploymentManager:
             print(f"Error updating CPU resources for deployment '{deployment_name}': {e}")
 
 
-    
-    
     def delete_deployment(self, deployment_name):
         try:
             # Load Kubernetes configuration
@@ -205,6 +205,31 @@ class DeploymentManager:
             autoscaling_api = client.AutoscalingV1Api()
             autoscaling_api.create_namespaced_horizontal_pod_autoscaler(namespace="default", body=autoscaler)
             print("Autoscaling configured successfully.")
+            
+    def update_hpa(self, hpa_name, new_min_replica, new_max_replicas):
+        # Load Kubernetes configuration
+        config.load_kube_config()
+
+        # Retrieve existing HPA
+        autoscaling_api = client.AutoscalingV1Api()
+        try:
+            hpa = autoscaling_api.read_namespaced_horizontal_pod_autoscaler(name=hpa_name, namespace="default")
+        except client.rest.ApiException as e:
+            if e.status == 404:
+                print(f"HPA '{hpa_name}' not found.")
+                return
+            else:
+                raise
+
+        # Update max replicas
+        hpa.spec.max_replicas = new_max_replicas
+        hpa.spec.min_replicas = new_min_replica
+
+        # Apply the changes
+        autoscaling_api.replace_namespaced_horizontal_pod_autoscaler(name=hpa_name, namespace="default", body=hpa)
+        print(f"Max replicas for HPA '{hpa_name}' updated successfully to {new_max_replicas}.")
+
+
 
     
     def create_service(self):
@@ -302,5 +327,3 @@ class DeploymentManager:
             json.dump(mapping_data, json_file, indent=4)
 
         print(f"Added key-value pair '{key}': '{value}' to the mapping file:", filename)
-
-
