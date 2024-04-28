@@ -390,4 +390,4 @@ $ python3 intermediate_store.py # Starts the web framework for storing intermedi
 
 The given example shows a trigger named "text_sentiment_analysis_trigger" which is associated with a DAG which is again associated with functions.
 
-> POST  http://10.129.28.219:5001/run/text_sentiment_analysis_trigger 
+> POST  http://10.129.28.219/run/text_sentiment_analysis_trigger 
