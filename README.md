@@ -231,6 +231,7 @@ Below diagram depicts the DAG specified above.
 > * update_deployment_cpu_resources(deployment_name, cpu_request, cpu_limit) : Updates the pods with a given deployment with updated CPU limits ans requests.
 > * delete_deployment(deployment_name) : Deletes a given deployment  
 > * set_autoscaling(min_replicas, max_replicas) : Creates a HPA with minimum and maximum replicas.  
+> * update_hpa(hpa_name,new_min_replica,new_max_replica): Updates a given HPA with new min and max replica pod count
 > * create_service() : Creates a service object of type NodePort.  
 > * delete_service(service_name) : Deletes the given service  
 > * delete_hpa(hpa_name) : Deletes a given HPA.
