@@ -12,8 +12,9 @@ DAGit is a platform designed to streamline the development and deployment of ser
 
 Trigger specification is a json file which follows a specific JSON Schema in accordance with DAGit. Following are the fields in the specification.
 
->* "trigger_name" : Name of the trigger. This is used while executing the workflow with the trigger.  
+>* "trigger_name" : Name of the trigger. This is used while executing the workflow with the trigger.
 >* "type": Type specifies whether the trigger is for function or dag. Accepted values are "dag" and "function"  
+>* "priority": priority level of the trigger which also determines the priority level of the workflow (e.g. gold > silver > bronze)
 >* "dags": If "type" field is specified as "dag", this field will accept a list of dag names to trigger (type = list). Else keep it as ""  
 >* "functions": If "type" field is specified as "function",this field will accept a list of functions to trigger (type = list). Else keep it as ""
 
@@ -23,6 +24,7 @@ Below is a sample example of a trigger specification
 {
     "trigger_name": "text_sentiment_analysis_trigger",
     "type":"dag",
+    "priority":"gold",
     "dags": ["text-sentiment-analysis"],
     "functions":""
 }
