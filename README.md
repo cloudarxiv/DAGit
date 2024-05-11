@@ -228,6 +228,11 @@ Below diagram depicts the DAG specified above.
 > * NodePort Service  
 > * Horizontal Pod Autoscalar (HPA)  
 
+The following figure demonstrates the architecture components
+
+![Alt text](./dagit_2.0.png)
+
+
 > DAGit has an implemented Class named Deployment Manager which has the following utility functions:  
 > * create_deployment() : Creates a deployment object 
 > * update_deployment_cpu_resources(deployment_name, cpu_request, cpu_limit) : Updates the pods with a given deployment with updated CPU limits ans requests.
