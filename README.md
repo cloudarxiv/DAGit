@@ -414,9 +414,6 @@ $ cd <path_to_DAGit>/controlplane
 
 $ python3 trigger_gateway.py # Starts DAGit instance 
 
-$ python3 intermediate_store.py # Starts the web framework for storing intermediate data
-
-
 ```
 
 ## Running a DAG using trigger
