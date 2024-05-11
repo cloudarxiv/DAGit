@@ -421,3 +421,11 @@ $ python3 trigger_gateway.py # Starts DAGit instance
 The given example shows a trigger named "text_sentiment_analysis_trigger" which is associated with a DAG which is again associated with functions.
 
 > POST  http://10.129.28.219/run/text_sentiment_analysis_trigger 
+
+Each request processes by DAGit is logged in the format:
+
+Request Start Timestamp || Request End Timestamp || Workflow Start Timestamp || Workflow End Timestamp || Total Response Time || Workflow Response Time || Priority || Trigger ID || DAG ID || DAG Activation ID
+
+```log
+2024-05-11 04:12:26.262, 2024-05-11 04:12:27.838, 2024-05-11 04:12:26.263,2024-05-11 04:12:27.833, 1.576, 1.57, gold, text_sentiment_analysis_trigger, text-sentiment-analysis, 065f0689-69e3-445c-a6eb-c1507dd4abde
+```
