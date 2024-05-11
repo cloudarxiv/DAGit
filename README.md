@@ -364,7 +364,7 @@ Below is the code snippet of how to use this function call
 ```
 Add this snippet at the end of your function before returning output.
 
-Note that you need to include the file store_output.py in the controlplane directory to your function directory and build the docker image out of it.
+Note that you need to include the file store_output.py from the controlplane/ directory to your function directory and build the docker image out of it.
 
 Here is a sample Dockerfile to build the image
 
