@@ -6,7 +6,7 @@ from newspaper import Article
 import redis
 import re
 import pickle
-
+import store_output
 import requests
 
 
@@ -54,29 +54,35 @@ def main():
     response = {
         "activation_id": activation_id,
         "processed_data": sentences
-    }    
-    # Call the store_data endpoint to store the response
-    store_data_url = "http://10.129.28.219:5005/store_data/fetch_sentences/redis"
-    # headers = {'Content-Type': 'application/json'}
-    response_store = requests.post(store_data_url,json=response, verify=False)  # returns the key only
-
-    if response_store.status_code == 200:
-        # If storing the data is successful, print the key
-        response_data = response_store.json()
-        
-        response_data["activation_id"] = activation_id
-
-        print("Key:", response_data["key"])
-    else:
-        # If there's an error, print the status code
-        print("Error:", response_store.status_code)
-
+    }
+    
+    key = store_output.store_intermediate_data(response,'fetch_sentences','redis')  
+    
+    response_data={}
+    response_data["activation_id"] = activation_id    
+    response_data["key"] = key
+    
     return jsonify(response_data) # returns key and activation id 
+
+    ############################################################################################
+   
+    # store_data_url = "http://10.129.28.219:5005/store_data/fetch_sentences/redis"
+    # # headers = {'Content-Type': 'application/json'}
+    # response_store = requests.post(store_data_url,json=response, verify=False)  # returns the key only
+
+    # if response_store.status_code == 200:
+    #     # If storing the data is successful, print the key
+    #     response_data = response_store.json()
+        
+    #     response_data["activation_id"] = activation_id
+
+    #     print("Key:", response_data["key"])
+    # else:
+    #     # If there's an error, print the status code
+    #     print("Error:", response_store.status_code)
+
     ################################################################################
     
-    
-    
-   
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0',port=8080)
