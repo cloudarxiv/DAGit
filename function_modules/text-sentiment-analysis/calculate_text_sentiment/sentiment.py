@@ -6,6 +6,8 @@ from textblob import TextBlob
 import pickle
 import time
 import uuid  # Import the uuid module
+import store_output
+
 
 import requests
 
@@ -41,21 +43,30 @@ def main():
         "activation_id": activation_id,
         "sentiments": sentiments
        }
-        # Call the store_data endpoint to store the response
-        store_data_url = "http://10.129.28.219:5005/store_data/calculate_sentiment/redis"
-        # headers = {'Content-Type': 'application/json'}
-        response_store = requests.post(store_data_url,json=response, verify=False)
+        
+        key = store_output.store_intermediate_data(response,'calculate_sentiment','redis')  
+    
+        response_data={}
+        response_data["activation_id"] = activation_id    
+        response_data["key"] = key
+    
+        return jsonify(response_data) # returns key and activation id 
 
-        if response_store.status_code == 200:
-            # If storing the data is successful, print the key
-            response_data = response_store.json()            
-            response_data["activation_id"] = activation_id
-        else:
-            # If there's an error, print the status code
-            print("Error:", response_store.status_code)
+        # # Call the store_data endpoint to store the response
+        # store_data_url = "http://10.129.28.219:5005/store_data/calculate_sentiment/redis"
+        # # headers = {'Content-Type': 'application/json'}
+        # response_store = requests.post(store_data_url,json=response, verify=False)
 
-        return jsonify(response_data)
-        #################################################################################
+        # if response_store.status_code == 200:
+        #     # If storing the data is successful, print the key
+        #     response_data = response_store.json()            
+        #     response_data["activation_id"] = activation_id
+        # else:
+        #     # If there's an error, print the status code
+        #     print("Error:", response_store.status_code)
+
+        # return jsonify(response_data)
+        # #################################################################################
 
     except Exception as e:
         # sentences = params["processed_data"]    
