@@ -236,7 +236,7 @@ Below diagram depicts the DAG specified above.
 > * delete_service(service_name) : Deletes the given service  
 > * delete_hpa(hpa_name) : Deletes a given HPA.
 
-Below is a sample code snippet to demonstrate the usage of the Functions and Deployment Manager Class to register the function.
+Below is a sample code snippet to demonstrate the usage of the Functions and Deployment Manager Class to register the function. Note that the "min_Replicas" and "max_replicas" is configurable by the user
 
 ```python
 
@@ -287,7 +287,7 @@ fr.delete_function(func)
 
 ![Alt text](./dagit_operations_interactions.png)
 
-
+## How do functions read data 
 The control plane passes intermediate data in the form of keys to the functions. The developer of the function has to read the key. Suppose you want to fetch the "url" from the parameters. Example of such an implementation is provided in the below script. 
 
 ```python
@@ -327,45 +327,71 @@ The control plane passes intermediate data in the form of keys to the functions.
 
 ```
 
-The functions running on container call a generic function which is a web framework exposed by FLASK to store the intermediate data and return the key as a pointer to the data. This is done to minimize data movement between control plane and the containers. 
+## How do functions write data 
 
-The web framework is implemented as a FLASK application which has the following input parameters : 
+The functions running on container call a generic function **store_intermediate_data** (provided to the developer) to store the intermediate data and return the key as a pointer to the data. This is done to minimize data movement between control plane and the containers. 
+
+* data : The response data to be stored by the function 
 
 * function name : The name of the function for which to store the intermediate data
 
 * destination : Destination storage as to where to store. Currently we support redis and S3 minio
 
-Below is the code snippet of how to use this endpoint to store output to your preferred destination:
+Below is the code snippet of how to use this function call
 
 ```python
 
-    ################################################################################
-        
-        activation_id = str(uuid.uuid4())
+        import store_output
+        ''' import other necessary libraries '''
+
+        ''' Rest of the function implementation '''
+
+        activation_id = str(uuid.uuid4()) 
 
         response = {
         "activation_id": activation_id,
-        "sentiments": sentiments
-       }
-        # Call the store_data endpoint to store the response
-        store_data_url = "http://10.129.28.219:5005/store_data/calculate_sentiment/redis"
-        # headers = {'Content-Type': 'application/json'}
-        response_store = requests.post(store_data_url,json=response, verify=False)
+        "quantity": quantity
+        }
 
-        if response_store.status_code == 200:
-            # If storing the data is successful, print the key
-            response_data = response_store.json()            
-            response_data["activation_id"] = activation_id
-        else:
-            # If there's an error, print the status code
-            print("Error:", response_store.status_code)
-
-        return jsonify(response_data)
-
-        #################################################################################
+        key = store_output.store_intermediate_data(response,'fetch_sentences','redis')  
+    
+        response_data={}
+        response_data["activation_id"] = activation_id    
+        response_data["key"] = key
+    
+        return jsonify(response_data) # returns key and activation id 
 
 ```
 Add this snippet at the end of your function before returning output.
+
+Note that you need to include the file store_output.py in the controlplane directory to your function directory and build the docker image out of it.
+
+Here is a sample Dockerfile to build the image
+
+``` Dockerfile
+FROM python:3.9-slim
+
+# Set the working directory in the container
+WORKDIR /usr/src/app
+
+# Copy the current directory contents into the container at /usr/src/app
+COPY . .
+
+RUN pip install redis
+
+RUN pip install flask
+
+RUN pip install requests
+
+# make sure to install python-dotenv and minio to use store_output
+
+RUN pip install python-dotenv
+RUN pip install minio
+
+CMD ["python", "data_processing.py"]
+
+
+```
 
 ## How to run DAGit
 
