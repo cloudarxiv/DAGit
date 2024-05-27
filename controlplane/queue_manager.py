@@ -1,7 +1,4 @@
 # queue_manager.py
-
-
-# to implement multi-priority queue 
 import redis
 
 class QueueManager:
@@ -17,6 +14,9 @@ class QueueManager:
     
     def size(self):
         return self.redis.llen(self.queue_name)
+    
+    def flush(self):
+        self.redis.flushdb()
     
     
 
