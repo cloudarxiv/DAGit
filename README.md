@@ -3,10 +3,17 @@
 DAGit is a platform designed to streamline the development and deployment of serverless applications using Directed Acyclic Graphs (DAGs). With DAGit, you can efficiently manage trigger events, register DAGs, and deploy functions seamlessly currently being maintained by Anubhav Jana and Purushottam Kulkarni from Indian Institute of Technology Bombay.
 
 
+## Citation
 
-<kbd style="border: 1px solid black; padding: 8px;">
+Anubhav Jana, Purushottam Kulkarni, and Umesh Bellur. "DAGit: A Platform For Enabling Serverless Applications." In *Proceedings of the 2023 IEEE 30th International Conference on High Performance Computing, Data, and Analytics (HiPC)*, pp. 367-376. DOI: [10.1109/HiPC58850.2023.00054](https://doi.org/10.1109/HiPC58850.2023.00054).
+
+## Link to the Publication
+
+[30th IEEE International Conference On High Performance Computing, Data, & Analytics (HiPC 2023)](https://ieeexplore.ieee.org/document/10487054)
+
+<!-- <kbd style="border: 1px solid black; padding: 8px;">
 <a href="https://ieeexplore.ieee.org/document/10487054">Published at the 30th IEEE International Conference On High Performance Computing, Data, & Analytics (HiPC 2023)</a>
-</kbd>
+</kbd> -->
 
 ### Trigger Specification
 
