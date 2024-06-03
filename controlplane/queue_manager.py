@@ -18,17 +18,3 @@ class QueueManager:
     def flush(self):
         self.redis.flushdb()
     
-    
-
-# if __name__ == "__main__":
-#     qm = QueueManager('test_queue')
-#     qm.enqueue('test_item')
-#     qm.enqueue('test_item1')
-
-#     qm.enqueue('test_item2')
-
-    
-#     print(f"Queue size after enqueue: {qm.size()}")
-#     item = qm.dequeue()
-#     print(f"Dequeued item: {item.decode('utf-8')}")
-#     print(f"Queue size after dequeue: {qm.size()}")
