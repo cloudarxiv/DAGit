@@ -1,0 +1,7 @@
+{
+    "trigger_name": "text_sentiment_analysis_trigger_2",
+    "type":"dag",
+    "priority":"bronze",
+    "dags": ["text-sentiment-analysis"],
+    "functions":""
+}

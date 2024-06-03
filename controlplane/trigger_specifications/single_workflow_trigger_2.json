@@ -1,0 +1,7 @@
+{
+    "trigger_name": "single_function_workflow_trigger_2",
+    "type":"dag",
+    "priority":"bronze",
+    "dags": ["single-function-workflow"],
+    "functions":""
+}

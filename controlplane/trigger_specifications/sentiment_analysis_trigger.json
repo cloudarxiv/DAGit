@@ -1,6 +1,7 @@
 {
     "trigger_name": "text_sentiment_analysis_trigger",
     "type":"dag",
+    "priority":"gold",
     "dags": ["text-sentiment-analysis"],
     "functions":""
 }

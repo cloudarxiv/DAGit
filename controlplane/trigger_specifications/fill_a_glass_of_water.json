@@ -1,0 +1,7 @@
+{
+    "trigger_name": "fill_a_glass_of_water",
+    "type":"dag",
+    "priority":"silver",
+    "dags": ["filling-a-glass-of-water"],
+    "functions":""
+}
