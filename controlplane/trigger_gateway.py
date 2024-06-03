@@ -4,34 +4,50 @@ import shutil
 import threading
 import json
 import os
-import io
 
-from flask import Flask, request,jsonify
+
+from flask import Flask, request,jsonify,current_app
 import pymongo
 import orchestrator
 import validate_trigger
 import redis_setup
 import minio_dagit
-import time
 import logging
 from datetime import datetime
-from queue import Queue
-import multiprocessing
+import time
+from celery import Celery
+from apscheduler.schedulers.background import BackgroundScheduler
 
+
+
+from queue_manager import QueueManager
 
 from functions import Functions
 from deployment import DeploymentManager
 
-import cProfile
-import pstats
+
+import threading
+
+
 
 
 
 
 app = Flask(__name__)
 
-bucket_name = 'dagit-store'
+dispatch_flag = threading.Event()
 
+queue_lock = threading.Lock()
+# Initialize the weights for gold, silver, and bronze queues
+weights = {'gold': 3, 'silver': 2, 'bronze': 1}
+print("----Starting with weights----------: ", weights)
+
+dispatch_interval = 5  # in seconds
+dispatch_count = 30
+
+
+
+bucket_name = 'dagit-store'
 
 # create minio client 
 minio_client = minio_dagit.create_minio_client(bucket_name)    
@@ -40,10 +56,20 @@ minio_client = minio_dagit.create_minio_client(bucket_name)
 redis_instance = redis_setup.create_redis_master_instance()
 # redis_slave = redis_setup.create_redis_slave_instance()
 
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 
+def make_celery(app):
+    celery = Celery(
+        app.import_name,
+        broker=app.config['CELERY_BROKER_URL'],
+        backend=app.config['CELERY_RESULT_BACKEND']
+    )
+    celery.conf.update(app.config)
+    return celery
 
-# configure logging
-# logging.basicConfig(filename='dagit_request_logs.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+celery = make_celery(app)
+
 
 # Configure the logger
 logging.basicConfig(filename='dagit_request_logs.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -97,81 +123,6 @@ def register_trigger():
     except Exception as e:
         data = {"status":"fail","reason":e}
         return json.dumps(data)
-
-
-@app.route('/register/function/<function_name>',methods=['POST'])
-def register_function(function_name):
-    list_of_file_keys = []
-    document = {}
-    function_dir = '/home/faasapp/Desktop/anubhav/function_modules' # Library of functions
-    new_dir = function_name
-    destination = os.path.join(function_dir, new_dir)
-    # Create the directory
-    os.makedirs(destination, exist_ok=True)
-    files = request.files
-    for filekey in files:
-        if filekey!='description':
-            list_of_file_keys.append(filekey)
-    for key in list_of_file_keys:
-        file = request.files[key]
-        filename = file.filename
-        # Save, copy, remove
-        file.save(file.filename)
-        shutil.copy(filename, destination)
-        os.remove(filename)
-    image_build_script = 'buildAndPush.sh'
-    shutil.copy(image_build_script, destination)
-    
-    # Prepare data 
-    document["function_name"] = function_name
-    document["image_build_script"] = 'buildAndPush.sh'
-    document["python_script"] = (request.files[list_of_file_keys[0]]).filename
-    document["dockerfile"] = (request.files[list_of_file_keys[1]]).filename
-    document["requirements.txt"] =(request.files[list_of_file_keys[2]]).filename
-
-    docker_image_name = "10.129.28.219:5000/"+function_name+"-image"
-    api_name = "/"+function_name+"-api"
-    path_name = "/"+function_name+"-path"
-    password = '1234'
-    # build docker image
-    cmd = ["sudo", "-S", "/home/faasapp/Desktop/anubhav/controlplane/build_image.sh",destination,docker_image_name]
-    # open subprocess with Popen
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-
-    # pass password to standard input
-    process.stdin.write(password + "\n")
-    process.stdin.flush()
-
-    # wait for process to complete and get output
-    output, errors = process.communicate()
-    print("OUTPUT---------",output)
-    print("ERRORS---------",errors)
-    # if(errors):
-    #     print("There is error building docker file")
-    #     data = {"message":"fail","reason":"docker build failed"}
-    #     return json.dumps(data)
-    # else:
-
-        # create action, register action with api, populate its mapping
-    subprocess.call(['./create_action.sh',destination,docker_image_name,function_name])
-    subprocess.call(['./register.sh',api_name,path_name,function_name])
-    subprocess.call(['bash', './actions.sh'])
-    
-    myclient = pymongo.MongoClient("mongodb://127.0.0.1/27017")
-    mydb = myclient["function_store"]
-    mycol = mydb["functions"]
-    try:
-        cursor = mycol.insert_one(document)
-        print("OBJECT ID GENERATED",cursor.inserted_id)
-        data = {"message":"success"}
-        return json.dumps(data)
-    except Exception as e:
-        print("Error--->",e)
-        data = {"message":"fail","reason":e}
-        return json.dumps(data)
-
-        # data = {"message":"success"}
-        # return json.dumps(data)
 
 
 @app.route('/register/dag/',methods=['POST'])
@@ -395,128 +346,188 @@ def execute_action(action_name):
         data = {"status": 404 ,"failure_reason":e}
         return data
 
-# Define a function to execute orchestrator.execute_dag in a thread
-def execute_dag_in_thread(dag_details, request_json, minio_client, redis_instance, bucket_name, result_queue):
-    thread_id = threading.get_ident()
-    # pr = cProfile.Profile()
 
-    try:       
-            
+def serve_request(priority, dag_to_execute, trigger_name, queue_delay):
+    try:
         request_start_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        # pr.enable()
-        res, workflow_start_timestamp, workflow_end_timestamp, workflow_duration, dag_id, dag_name = orchestrator.execute_dag(dag_details, request_json, minio_client, redis_instance, bucket_name,thread_id)
-        # pr.disable()
+        res, workflow_start_timestamp, workflow_end_timestamp, workflow_duration, dag_id, dag_name = orchestrator.execute_dag(
+            dag_to_execute, request.json, redis_instance, minio_client, bucket_name)
         request_end_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        request_duration = (datetime.strptime(request_end_timestamp, '%Y-%m-%d %H:%M:%S.%f') - datetime.strptime(request_start_timestamp, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()      
-       
+        request_duration = (datetime.strptime(request_end_timestamp, '%Y-%m-%d %H:%M:%S.%f') - datetime.strptime(
+            request_start_timestamp, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()
+        workflow_duration = (datetime.strptime(workflow_end_timestamp, '%Y-%m-%d %H:%M:%S.%f') - datetime.strptime(
+            workflow_start_timestamp, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()
+        
+        print("Trigger executed----",trigger_name)
+         # Calculate total request duration including queue delay
+        e2e_latency = request_duration + queue_delay
 
-        if res:
-            logging.info("{}, {}, {},{}, {}, {}, {}, {}".format(request_start_timestamp, request_end_timestamp, workflow_start_timestamp, workflow_end_timestamp, request_duration, workflow_duration, dag_name, dag_id))
-            result_queue.put({
-                "response": res,
-                "status": 200,
-                "request_start_timestamp": request_start_timestamp,
-                "request_end_timestamp": request_end_timestamp,
-                "request_duration_seconds": request_duration,
-                "workflow_duration_seconds": workflow_duration,
-                "workflow_start_timestamp": workflow_start_timestamp,
-                "workflow_end_timestamp": workflow_end_timestamp,
-                "dag_activation_id": dag_id,
-                "dag_id": dag_name
-            })
-        else:
-            result_queue.put({"response": "Workflow did not execute completely", "status": 400})
+        logging.info("{}, {}, {},{}, {}, {}, {}, {}, {}, {}, {}, {}".format(request_start_timestamp, request_end_timestamp,
+                                                                    workflow_start_timestamp, workflow_end_timestamp,
+                                                                    request_duration, workflow_duration, priority,
+                                                                    trigger_name, queue_delay, e2e_latency, dag_name, dag_id))
+
+        res = jsonify({"response": res, "status": 200,
+                       "request_start_timestamp": request_start_timestamp,
+                       "request_end_timestamp": request_end_timestamp,
+                       "request_duration_seconds": request_duration,
+                       "workflow_duration_seconds": workflow_duration,
+                       "workflow_start_timestamp": workflow_start_timestamp,
+                       "workflow_end_timestamp": workflow_end_timestamp,
+                       "dag_activation_id": dag_id,
+                       "dag_id": dag_name
+                       })
+        return res
     except Exception as e:
-        result_queue.put({"response": "failed", "status": 400, "reason":str(e)})
+        print("Error:", str(e))
+        return {"response": "Workflow did not execute completely", "status": 400}
+    
+
+def dispatch_requests():
+    print("Started dispatching......")
+    while True:
+        dispatched = 0
+        while dispatched < dispatch_count:
+            for _ in range(weights['gold']):
+                if dispatched >= dispatch_count:
+                    break
+                if gold_queue:
+                    item,waiting_time = gold_queue.dequeue()
+                    if item:
+                        priority, dag_to_execute, trigger_name = item.split(',')
+                        serve_request(priority, dag_to_execute, trigger_name,waiting_time)
+                        dispatched += 1
+
+            for _ in range(weights['silver']):
+                if dispatched >= dispatch_count:
+                    break
+                if silver_queue:
+                    item,waiting_time = silver_queue.dequeue()
+                    if item:
+                        priority, dag_to_execute, trigger_name = item.split(',')
+                        serve_request(priority, dag_to_execute, trigger_name,waiting_time)
+                        dispatched += 1
+
+            for _ in range(weights['bronze']):
+                if dispatched >= dispatch_count:
+                    break
+                if bronze_queue:
+                    item,waiting_time = bronze_queue.dequeue()
+                    if item:
+                        priority, dag_to_execute, trigger_name = item.split(',')
+                        serve_request(priority, dag_to_execute, trigger_name,waiting_time)
+                        dispatched += 1
+        
+
+        
+
+# Dispatching loop function
+def dispatch_loop():
+    while True:
+        # Check the cumulative queue size
+        gold_size = gold_queue.size()
+        silver_size = silver_queue.size()
+        bronze_size = bronze_queue.size()
+        cumulative_size = gold_size + silver_size + bronze_size
+        
+        # If cumulative size exceeds the threshold, dispatch requests
+        if cumulative_size > 50:
+            print("Cumulative queue size exceeds 50. Dispatching requests...")
+            dispatch_requests()
+            print("Dispatch complete")
+        
+        # Sleep for the dispatch interval before checking again
+        time.sleep(dispatch_interval)
 
 
-   
+# curl -X POST -H "Content-Type: application/json" -d '{"gold": 4, "silver": 3, "bronze": 2}' http://10.129.28.219:5030/update_weights
+
+@app.route('/update_weights', methods=['POST'])
+def update_weights():
+    global weights
+    new_weights = request.json
+    if 'gold' in new_weights:
+        weights['gold'] = new_weights['gold']
+    if 'silver' in new_weights:
+        weights['silver'] = new_weights['silver']
+    if 'bronze' in new_weights:
+        weights['bronze'] = new_weights['bronze']
+    return jsonify({"response": "Weights updated successfully", "weights": weights}), 200
+
+
 # EXAMPLE URL: http://10.129.28.219:5001/run/mydagtrigger
 @app.route('/run/<trigger_name>', methods=['GET', 'POST'])
 def orchestrate_dag(trigger_name):   
     
     global trigger_cache
+    global gold_queue
+    global silver_queue
+    global bronze_queue
+    
     orchestrator.dag_responses = []
     try:
         # Check if the trigger is already cached
-        if trigger_name in trigger_cache:            
+        if trigger_name in trigger_cache:
             triggers = trigger_cache[trigger_name]
-        else:
-           
-            # If not cached, fetch and validate the trigger
+        else:            
             triggers = validate_trigger.get_trigger_json(trigger_name)            
             trigger_cache[trigger_name] = triggers
         
         if len(triggers) == 0:
             return {"response": "the given trigger is not registered in DAGit trigger store"}
+        # triggers = validate_trigger.get_trigger_json(trigger_name)
         else:
             thread_list = []
             if triggers[0]['type'] == 'dag':
-                # dags = triggers[0]['dags']
+                priority = triggers[0]['priority']
+                dag_to_execute = triggers[0]['dags'][0] 
                 
-                try:                   
+                queue_manager = None
+                if priority == "gold":
+                    queue_manager = gold_queue
+                elif priority == "silver":
+                    queue_manager = silver_queue
+                elif priority == "bronze":
+                    queue_manager = bronze_queue
+                
+
+                if queue_manager:
+                    queue_manager.enqueue(f"{priority},{dag_to_execute},{trigger_name}")
+                    print("Queue-----------------------",queue_manager.queue_name,queue_manager.size())
                     
+                    with queue_lock:
+                        dispatch_loop()
                     
-                    try:
-                        request_start_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]            
-
-                        res, workflow_start_timestamp, workflow_end_timestamp, workflow_duration, dag_id, dag_name = orchestrator.execute_dag(triggers[0]['dags'][0], request.json, redis_instance,minio_client,bucket_name)
-                        request_end_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]  
-                        
-                        request_duration = (datetime.strptime(request_end_timestamp, '%Y-%m-%d %H:%M:%S.%f') - datetime.strptime(request_start_timestamp, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()
-                                        
-                        workflow_duration =  (datetime.strptime(workflow_end_timestamp, '%Y-%m-%d %H:%M:%S.%f') - datetime.strptime(workflow_start_timestamp, '%Y-%m-%d %H:%M:%S.%f')).total_seconds()
-
-                       logging.info("{}, {}, {},{}, {}, {}, {}, {}".format(request_start_timestamp,request_end_timestamp,workflow_start_timestamp,workflow_end_timestamp,request_duration,workflow_duration,dag_name,dag_id))
-
-                        return jsonify({"response": res, "status": 200, 
-                                "request_start_timestamp":request_start_timestamp,
-                                "request_end_timestamp": request_end_timestamp,
-                                "request_duration_seconds": request_duration,
-                                "workflow_duration_seconds": workflow_duration,
-                                "workflow_start_timestamp":workflow_start_timestamp,
-                                "workflow_end_timestamp": workflow_end_timestamp,
-                                "dag_activation_id":dag_id,
-                                "dag_id": dag_name
-                                })                     
-                       
-                        
-                    except Exception as e:
-                        print("------Error line 519---", str(e)) 
-                        return{"response":"Workflow did not execute completely", "status": 400}                   
                    
-
-                except Exception as e:
-                    print("Error------->",e)
-                    return {"response": "failed", "status": 400, "reason": str(e)}
-
-            else:
-                try:
-                    functions = triggers[0]['functions']
-                    arguments = request.json
-                    # with lock:
-                    for function in functions:
-                        thread_list.append(threading.Thread(target=orchestrator.execute_action, args=[function, arguments]))
-                    for thread in thread_list:
-                        thread.start()
-                    for thread in thread_list:
-                        thread.join()
-
-                    return {"response": orchestrator.function_responses, "status": 200}
-                except Exception as e:
-                    return {"response": "failed", "status": 400}
+            
+            return {"response": "Request enqueued successfully", "status": 200}               
 
     except Exception as e:
         data = {"status": 404, "message": "failed"}
         return data
 
 
+
 if __name__ == '__main__':
-    # Number of processes you want to run concurrently
-    num_processes = 5
+    
+    # Initialize global queues
+    gold_queue = QueueManager('gold_queue')
+    silver_queue = QueueManager('silver_queue')
+    bronze_queue = QueueManager('bronze_queue')
+    
+    gold_queue.flush()
+    silver_queue.flush()
+    bronze_queue.flush()
+    
+
+    
+    # app.run(host='0.0.0.0', port=5030)
+
+    # # Number of processes you want to run concurrently
+    # num_processes = 10
     
     # Port number for the first process
-    base_port = 5001
+    base_port = 5006
     
     # Create a list to store the processes
     processes = []
