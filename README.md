@@ -407,6 +407,16 @@ CMD ["python", "data_processing.py"]
 
 ```
 
+## Pre-requisites
+
+1. Docker - need docker for container runtime.
+
+2. Kubernetes - need 1 master node + multiple worker nodes setting (install DAGit source code on master node). Label the CPU nodes as "type=cpu" and "type="gpu" for GPU worker node.
+
+3. MinIO - required for persistant storage (install it on the master node).
+
+
+
 ## How to run DAGit
 
 ```bash
